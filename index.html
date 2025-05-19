@@ -136,12 +136,21 @@
             for (let y = 0; y < GRID_HEIGHT; y++) {
                 for (let x = 0; x < GRID_WIDTH; x++) {
                     if (grid[y][x].active) {
-                        ctx.fillStyle = grid[y][x].color;
-                        ctx.fillRect(
-                            x * BLOCK_SIZE + 1,
-                            y * BLOCK_SIZE + 1,
-                            BLOCK_SIZE - 2,
-                            BLOCK_SIZE - 2
+                        const bx = x * BLOCK_SIZE;
+const by = y * BLOCK_SIZE;
+const color = grid[y][x].color;
+
+// Crear gradiente vertical para dar efecto de volumen
+const gradient = ctx.createLinearGradient(bx, by, bx, by + BLOCK_SIZE);
+gradient.addColorStop(0, lightenColor(color, 0.4));
+gradient.addColorStop(1, darkenColor(color, 0.4));
+
+ctx.fillStyle = gradient;
+ctx.fillRect(bx + 1, by + 1, BLOCK_SIZE - 2, BLOCK_SIZE - 2);
+
+// Borde para resaltar
+ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+ctx.strokeRect(bx + 1, by + 1, BLOCK_SIZE - 2, BLOCK_SIZE - 2);
                         );
                     }
                 }
