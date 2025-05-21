@@ -85,13 +85,11 @@
 </head>
 <body>
     <div class="game-container">
-        <div class="score">Puntuación: <span id="score">0</span></div>
-        <canvas id="gameCanvas"></canvas>
-        <div class="buttons">
-            <button id="restart" class="game-button">Reiniciar</button>
-            <button id="settings" class="game-button">Ajustes</button>
-        </div>
-    </div>
+        <div class="score">
+    Puntuación: <span id="score">0</span><br>
+    Mejor puntuación: <span id="highscore">0</span><br>
+    Nivel: <span id="level">1</span>
+</div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
@@ -101,9 +99,12 @@
         const GRID_HEIGHT = 15;
         const COLORS = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF'];
 
-        let score = 0;
-        let grid = [];
-        let canvasScale = 1;
+        let level = 1;
+let blocksToClear = 30; // cantidad de bloques que se deben eliminar para subir de nivel
+let clearedBlocks = 0;
+
+let highscore = localStorage.getItem('blockBlastHighscore') || 0;
+document.getElementById('highscore').textContent = highscore;
 
         function initCanvas() {
             const baseWidth = 400;
@@ -123,8 +124,11 @@
                 grid[y] = [];
                 for (let x = 0; x < GRID_WIDTH; x++) {
                     grid[y][x] = {
-                        color: COLORS[Math.floor(Math.random() * COLORS.length)],
-                        active: true
+    color: COLORS[Math.floor(Math.random() * COLORS.length)],
+    active: true,
+    visible: true
+};
+
                     };
                 }
             }
@@ -135,8 +139,9 @@
             
             for (let y = 0; y < GRID_HEIGHT; y++) {
                 for (let x = 0; x < GRID_WIDTH; x++) {
-                    if (grid[y][x].active) {
-                        ctx.fillStyle = grid[y][x].color;
+                    if (grid[y][x].active && grid[y][x].visible) {
+
+                ctx.fillStyle = grid[y][x].color;
                         ctx.fillRect(
                             x * BLOCK_SIZE + 1,
                             y * BLOCK_SIZE + 1,
@@ -192,6 +197,28 @@
         }
 
         function checkGameOver() {
+            function updateScore(points, matchedBlocks) {
+    score += points;
+    clearedBlocks += matchedBlocks;
+    document.getElementById('score').textContent = score;
+
+    if (score > highscore) {
+        highscore = score;
+        localStorage.setItem('blockBlastHighscore', highscore);
+        document.getElementById('highscore').textContent = highscore;
+    }
+
+    if (clearedBlocks >= blocksToClear) {
+        level++;
+        clearedBlocks = 0;
+        blocksToClear += 10; // cada nivel es un poco más difícil
+        alert('¡Nivel ' + level + ' alcanzado!');
+        document.getElementById('level').textContent = level;
+        initGrid(); // reinicia el grid
+        draw();
+    }
+}
+
             for (let y = 0; y < GRID_HEIGHT; y++) {
                 for (let x = 0; x < GRID_WIDTH; x++) {
                     if (grid[y][x].active) {
@@ -216,14 +243,24 @@
                     matches.forEach(([mx, my]) => {
                         grid[my][mx].active = false;
                     });
-                    score += matches.length * 10;
-                    document.getElementById('score').textContent = score;
+                    updateScore(matches.length * 10, matches.length);
+
                     dropBlocks();
                     
                     setTimeout(() => {
                         if (checkGameOver()) {
                             alert('¡Juego terminado! Puntuación final: ' + score);
-                            restart();
+                            function restart() {
+    score = 0;
+    level = 1;
+    blocksToClear = 30;
+    clearedBlocks = 0;
+    document.getElementById('score').textContent = '0';
+    document.getElementById('level').textContent = '1';
+    initGrid();
+    draw();
+}
+
                         }
                     }, 300);
                 }
